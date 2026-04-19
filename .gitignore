@@ -1,0 +1,62 @@
+.venv/
+.python-version
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.DS_Store
+
+# PolyTracker outputs (can be HUGE!)
+*.tdag
+*.bc
+*.bc.o
+.*.bc.o
+.*.o
+blight_journal.jsonl
+
+# Build directory (created by grammar-miner.py)
+examples/build/
+
+# Pipeline intermediate outputs (regenerable)
+examples/token_events.json
+examples/parse_trees.json
+examples/generalized_methods.json
+examples/generalized_loops.json
+examples/raw_grammar.json
+examples/generalized_grammar.json
+examples/parsing_grammar.json
+examples/final_grammar.json
+
+# Test/debug scripts (already deleted)
+examples/test_*.py
+examples/debug_*.py
+examples/explore_*.py
+
+# Logs
+*.log
+*.jsonl
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backup files
+*.bak
+*.tmp
+*~

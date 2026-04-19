@@ -1,0 +1,8 @@
+pudb
+fuzzingbook
+pygraphviz
+polytracker
+cxxfilt
+
+# System dependency (not a pip package):
+#   graphviz (install via Homebrew on macOS)

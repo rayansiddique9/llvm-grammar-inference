@@ -1,0 +1,97 @@
+[
+  {
+    "comparisons_fmt": "idx, char, method_call_id",
+    "comparisons": [
+      [
+        0,
+        "{",
+        2
+      ],
+      [
+        1,
+        "i",
+        3
+      ],
+      [
+        2,
+        "=",
+        3
+      ],
+      [
+        3,
+        "1",
+        4
+      ],
+      [
+        4,
+        ";",
+        4
+      ],
+      [
+        5,
+        "}",
+        3
+      ]
+    ],
+    "method_map_fmt": "method_call_id, method_name, children",
+    "method_map": {
+      "0": [
+        0,
+        null,
+        [
+          1
+        ]
+      ],
+      "1": [
+        1,
+        "parse_expr",
+        [
+          2
+        ]
+      ],
+      "2": [
+        2,
+        "program",
+        [
+          3
+        ]
+      ],
+      "3": [
+        3,
+        "statement",
+        [
+          4
+        ]
+      ],
+      "4": [
+        4,
+        "expr",
+        [
+          5
+        ]
+      ],
+      "5": [
+        5,
+        "test",
+        [
+          6
+        ]
+      ],
+      "6": [
+        6,
+        "sum",
+        [
+          7
+        ]
+      ],
+      "7": [
+        7,
+        "term",
+        []
+      ]
+    },
+    "inputstr": "{i=1;}",
+    "original": "./test_subject.sh",
+    "arg": "input"
+  }
+]
