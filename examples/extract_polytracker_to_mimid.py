@@ -39,9 +39,6 @@ FUNCTION_MAP_FILE = "functionid.json"
 INPUT_FILE = "tiny.input.1"
 OUTPUT_FILE = "token_events.json"
 
-# Lexer-level functions to skip (parser-specific)
-# TODO: Replace with frequency-based auto-detection
-SKIP_FUNCTIONS = {'next_sym', 'next_ch', 'main'}
 
 print("="*70)
 print("POLYTRACKER → MIMID CONVERTER")
@@ -127,43 +124,91 @@ def resolve_label_to_input_offsets(label, tdfile):
     
     return offsets
 
+def detect_skip_functions(events, freq_threshold=0.5,
+                          leaf_ratio_threshold=0.7,
+                          root_ratio_threshold=0.9,
+                          leaf_depth=2):
+    """
+    Identifies lexer-level and entry-point functions to skip during
+    call stack extraction, using two structural signals:
+
+    - LEAF: functions appearing in the innermost `leaf_depth` positions
+      of the call stack in the majority of events they occur in.
+      These are tokenizer/lexer functions (e.g. next_ch, next_sym).
+
+    - ROOT: functions appearing as the outermost frame in the majority
+      of events they occur in. These are entry points (e.g. main).
+
+    For scannerless parsers no single function dominates the leaf
+    position across different parse contexts, so the returned set is
+    empty — which is the correct behaviour (nothing to skip).
+    """
+    total = len(events)
+    if total == 0:
+        return set()
+
+    total_count = {}
+    near_leaf_count = {}
+    root_count = {}
+
+    for event in events:
+        stack = list(event.callstack)
+        n = len(stack)
+        for i, func in enumerate(stack):
+            total_count[func] = total_count.get(func, 0) + 1
+            if n - 1 - i < leaf_depth:
+                near_leaf_count[func] = near_leaf_count.get(func, 0) + 1
+            if i == 0:
+                root_count[func] = root_count.get(func, 0) + 1
+
+    skip = set()
+    for func, count in total_count.items():
+        if count / total < freq_threshold:
+            continue
+        if near_leaf_count.get(func, 0) / count > leaf_ratio_threshold:
+            skip.add(func)
+        elif root_count.get(func, 0) / count > root_ratio_threshold:
+            skip.add(func)
+
+    return skip
+
 print(f"\n[4/5] Building call graph from control flow events...")
 
-# Collect all semantic call stacks
-all_stacks = []
-byte_to_functions = {}
-total_events = 0
-
+# Collect all tainted CF events (single pass — cflog may not be re-iterable)
+all_cf_events = []
 for event in cflog:
     if isinstance(event, TDTaintedControlFlowEvent):
-        total_events += 1
-        input_offsets = resolve_label_to_input_offsets(event.label, tdfile)
-        
-        # Extract semantic stack (skip lexer-level functions)
-        semantic_stack = []
-        for func in event.callstack:
-            if func not in SKIP_FUNCTIONS:
-                semantic_stack.append(func)
-        
-        # Fallback if stack is empty after filtering
-        if not semantic_stack:
-            # Use first non-skipped function from original stack, or 'main'
-            for func in event.callstack:
-                if func != 'main':
-                    semantic_stack = [func]
-                    break
-            if not semantic_stack:
-                semantic_stack = ['main']
-        
-        all_stacks.append(semantic_stack)
-        
-        # Map bytes to their deepest (leaf) function
-        for offset in input_offsets:
-            if offset not in byte_to_functions:
-                byte_to_functions[offset] = []
-            byte_to_functions[offset].append(semantic_stack[-1])
+        all_cf_events.append(event)
 
-print(f"  ✓ Processed {total_events} control flow events")
+print(f"  ✓ Collected {len(all_cf_events)} tainted control flow events")
+
+# Detect lexer/entry-point functions to skip
+print(f"  Detecting lexer functions via frequency+position heuristic...")
+skip_functions = detect_skip_functions(all_cf_events)
+print(f"  ✓ Detected skip functions: {sorted(skip_functions)}")
+
+# Process events with detected skip set
+all_stacks = []
+byte_to_functions = {}
+
+for event in all_cf_events:
+    input_offsets = resolve_label_to_input_offsets(event.label, tdfile)
+
+    semantic_stack = [f for f in event.callstack if f not in skip_functions]
+
+    # Fallback: if everything was filtered, use innermost function from original stack
+    if not semantic_stack:
+        stack = list(event.callstack)
+        semantic_stack = [stack[-1]] if stack else ['unknown']
+
+    all_stacks.append(semantic_stack)
+
+    for offset in input_offsets:
+        if offset not in byte_to_functions:
+            byte_to_functions[offset] = []
+        byte_to_functions[offset].append(semantic_stack[-1])
+
+print(f"  ✓ Processed {len(all_cf_events)} control flow events")
 print(f"  ✓ Found {len(all_stacks)} semantic call stacks")
 print(f"  ✓ Mapped {len(byte_to_functions)} input bytes to functions")
 
