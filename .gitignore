@@ -18,7 +18,14 @@ build/
 *.bc.o
 .*.bc.o
 .*.o
+*.instrumented
 blight_journal.jsonl
+functionid.json
+
+input.tree
+
+# Plain build binaries (add parser name here when adding new parsers)
+examples/tiny
 
 # Build directory (created by grammar-miner.py)
 examples/build/

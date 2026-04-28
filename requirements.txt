@@ -1,8 +1,7 @@
 pudb
-fuzzingbook
-pygraphviz
-polytracker
 cxxfilt
+matplotlib>=3.9
+fuzzingbook
 
-# System dependency (not a pip package):
-#   graphviz (install via Homebrew on macOS)
+# polytracker: only needed inside Docker container, not on host
+# pygraphviz: not used by any pipeline script
